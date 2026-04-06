@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  school    String?
+  role      Role     @default(TEACHER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courses Course[]
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+model Course {
+  id            String   @id @default(uuid())
+  userId        String
+  subject       String
+  classYear     Int
+  classSection  String
+  schoolType    String
+  curriculumRef String?
+  description   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modules Module[]
+}
+
+model Module {
+  id        String   @id @default(uuid())
+  courseId  String
+  title     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+}
+
+model Lesson {
+  id            String      @id @default(uuid())
+  moduleId      String
+  title         String
+  objectives    String?
+  prerequisites String?
+  durationHours Float       @default(1.0)
+  methodology   Methodology @default(STANDARD)
+  status        Status      @default(DRAFT)
+  position      Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  module     Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  activities Activity[]
+}
+
+enum Methodology {
+  FIVE_E
+  LAB
+  STANDARD
+  FLIPPED
+}
+
+enum Status {
+  DRAFT
+  READY
+  PUBLISHED
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  lessonId    String
+  type        ActivityType
+  title       String
+  content     String?      @db.Text
+  aiGenerated Boolean      @default(false)
+  position    Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+enum ActivityType {
+  SPIEGAZIONE
+  ESERCIZI
+  VERIFICA
+  SCHEDA
+  DIAPOSITIVE
+  COMPITO
+}
