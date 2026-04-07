@@ -46,7 +46,8 @@ Crei contenuti didattici professionali, chiari e coinvolgenti per i docenti.
 Rispondi sempre in italiano.
 Struttura il contenuto in HTML semantico pulito usando: <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>.
 Non usare mai markdown, solo HTML.
-Non includere tag <html>, <head>, <body> — solo il contenuto interno.`
+Non includere tag <html>, <head>, <body> — solo il contenuto interno.
+IMPORTANTE: quando generi più tipi di attività, separa ogni tipo inserendo esattamente questa stringa su una riga separata tra un tipo e l'altro: <!-- ##ACTIVITY_BREAK## -->`
 
     const userPrompt = buildUserPrompt({
       lessonTitle,

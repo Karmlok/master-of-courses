@@ -169,24 +169,48 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
     setError(null)
 
     try {
-      const activityTypeLabels = selectedTypes
-        .map((t) => ACTIVITY_SHORT_LABELS[t] ?? t)
-        .join(' + ')
+      const SEPARATOR = '<!-- ##ACTIVITY_BREAK## -->'
+      const parts = generatedContent
+        .split(SEPARATOR)
+        .map((p) => p.trim())
+        .filter(Boolean)
 
-      const res = await fetch('/api/activities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonId: lesson.id,
-          type: selectedTypes[0] ?? 'SPIEGAZIONE',
-          title: `${activityTypeLabels} — ${lesson.title}`,
-          content: generatedContent,
-          aiGenerated: true,
-        }),
-      })
-
-      const json = await res.json()
-      if (!json.success) throw new Error(json.message)
+      if (parts.length === selectedTypes.length && selectedTypes.length > 1) {
+        // Salva ogni tipo come attività separata
+        for (let i = 0; i < selectedTypes.length; i++) {
+          const res = await fetch('/api/activities', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lessonId: lesson.id,
+              type: selectedTypes[i],
+              title: `${ACTIVITY_SHORT_LABELS[selectedTypes[i]] ?? selectedTypes[i]} — ${lesson.title}`,
+              content: parts[i],
+              aiGenerated: true,
+            }),
+          })
+          const json = await res.json()
+          if (!json.success) throw new Error(json.message)
+        }
+      } else {
+        // Fallback: salva tutto come un'unica attività
+        const activityTypeLabels = selectedTypes
+          .map((t) => ACTIVITY_SHORT_LABELS[t] ?? t)
+          .join(' + ')
+        const res = await fetch('/api/activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonId: lesson.id,
+            type: selectedTypes[0] ?? 'SPIEGAZIONE',
+            title: `${activityTypeLabels} — ${lesson.title}`,
+            content: generatedContent,
+            aiGenerated: true,
+          }),
+        })
+        const json = await res.json()
+        if (!json.success) throw new Error(json.message)
+      }
 
       setIsSaved(true)
       onSaved()
