@@ -34,26 +34,10 @@ const ACTIVITY_TYPES = [
 ]
 
 const TONES = [
-  {
-    key: 'accessibile',
-    label: 'Accessibile',
-    description: 'Chiaro e semplice, con esempi concreti',
-  },
-  {
-    key: 'rigoroso',
-    label: 'Rigoroso',
-    description: 'Preciso, con terminologia disciplinare',
-  },
-  {
-    key: 'narrativo',
-    label: 'Narrativo',
-    description: 'Coinvolgente, con aneddoti e storie',
-  },
-  {
-    key: 'tecnico',
-    label: 'Tecnico',
-    description: 'Specialistico, per studenti avanzati',
-  },
+  { key: 'accessibile', label: 'Accessibile', description: 'Chiaro e semplice, con esempi concreti' },
+  { key: 'rigoroso', label: 'Rigoroso', description: 'Preciso, con terminologia disciplinare' },
+  { key: 'narrativo', label: 'Narrativo', description: 'Coinvolgente, con aneddoti e storie' },
+  { key: 'tecnico', label: 'Tecnico', description: 'Specialistico, per studenti avanzati' },
 ]
 
 const ACTIVITY_SHORT_LABELS: Record<string, string> = {
@@ -85,7 +69,7 @@ interface GenerateWizardProps {
     schoolType: string
     classSection: string
   }
-  defaultTypes?: string[] // Pre-seleziona i tipi allo Step 2
+  defaultTypes?: string[]
   onClose: () => void
   onSaved: () => void
 }
@@ -99,15 +83,23 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
   )
   const [tone, setTone] = useState('accessibile')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
-  const [generatedContent, setGeneratedContent] = useState('')
+
+  // Risultati per tipo: un record per ogni API call completata
+  const [generationResults, setGenerationResults] = useState<Array<{ type: string; content: string }>>([])
+  // Indice del tipo in corso di generazione (-1 = nessuno)
+  const [currentIndex, setCurrentIndex] = useState(-1)
+  // Contenuto in streaming per il tipo corrente
+  const [currentStream, setCurrentStream] = useState('')
+
   const [isGenerating, setIsGenerating] = useState(false)
+  const [previewIndex, setPreviewIndex] = useState(0) // quale tab è attiva nel viewer
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const methodology =
-    METHODOLOGY_INFO[lesson.methodology] ?? { label: lesson.methodology, color: '#534AB7' }
+  const hasResults = generationResults.length > 0
+  const methodology = METHODOLOGY_INFO[lesson.methodology] ?? { label: lesson.methodology, color: '#534AB7' }
 
   function toggleType(key: string) {
     setSelectedTypes((prev) =>
@@ -115,103 +107,100 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
     )
   }
 
+  // Aggiorna il contenuto di un singolo risultato (per l'editor)
+  function updateResultContent(index: number, newContent: string) {
+    setGenerationResults((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, content: newContent } : r))
+    )
+  }
+
+  // ── Genera: una chiamata per ogni tipo ───────────────────────────────────────
+
   async function handleGenerate() {
     setIsGenerating(true)
-    setGeneratedContent('')
+    setGenerationResults([])
+    setCurrentStream('')
+    setCurrentIndex(-1)
     setIsSaved(false)
     setError(null)
     setIsEditing(false)
+    setPreviewIndex(0)
 
     try {
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonTitle: lesson.title,
-          objectives: lesson.objectives,
-          prerequisites: lesson.prerequisites,
-          methodology: lesson.methodology,
-          activityTypes: selectedTypes,
-          tone,
-          additionalInstructions,
-          subject: course.subject,
-          classYear: course.classYear,
-          schoolType: course.schoolType,
-        }),
-      })
+      for (let i = 0; i < selectedTypes.length; i++) {
+        setCurrentIndex(i)
+        setCurrentStream('')
 
-      if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.message || 'Errore nella generazione')
-      }
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonTitle: lesson.title,
+            objectives: lesson.objectives,
+            prerequisites: lesson.prerequisites,
+            methodology: lesson.methodology,
+            activityTypes: [selectedTypes[i]], // UNA sola tipo per chiamata
+            tone,
+            additionalInstructions,
+            subject: course.subject,
+            classYear: course.classYear,
+            schoolType: course.schoolType,
+          }),
+        })
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          const chunk = decoder.decode(value)
-          setGeneratedContent((prev) => prev + chunk)
+        if (!response.ok) {
+          let msg = 'Errore nella generazione'
+          try { const err = await response.json(); msg = err.message || msg } catch { /* ignore */ }
+          throw new Error(msg)
         }
+
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let typeContent = ''
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            const chunk = decoder.decode(value)
+            typeContent += chunk
+            setCurrentStream((prev) => prev + chunk)
+          }
+        }
+
+        setGenerationResults((prev) => [...prev, { type: selectedTypes[i], content: typeContent }])
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Si è verificato un errore')
     } finally {
       setIsGenerating(false)
+      setCurrentIndex(-1)
     }
   }
 
+  // ── Salva: un'attività per ogni risultato generato ────────────────────────────
+
   async function handleSave() {
-    if (!generatedContent) return
+    if (generationResults.length === 0) return
     setIsSaving(true)
     setError(null)
 
     try {
-      const SEPARATOR = '<!-- ##ACTIVITY_BREAK## -->'
-      const parts = generatedContent
-        .split(SEPARATOR)
-        .map((p) => p.trim())
-        .filter(Boolean)
-
-      if (parts.length === selectedTypes.length && selectedTypes.length > 1) {
-        // Salva ogni tipo come attività separata
-        for (let i = 0; i < selectedTypes.length; i++) {
-          const res = await fetch('/api/activities', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lessonId: lesson.id,
-              type: selectedTypes[i],
-              title: `${ACTIVITY_SHORT_LABELS[selectedTypes[i]] ?? selectedTypes[i]} — ${lesson.title}`,
-              content: parts[i],
-              aiGenerated: true,
-            }),
-          })
-          const json = await res.json()
-          if (!json.success) throw new Error(json.message)
-        }
-      } else {
-        // Fallback: salva tutto come un'unica attività
-        const activityTypeLabels = selectedTypes
-          .map((t) => ACTIVITY_SHORT_LABELS[t] ?? t)
-          .join(' + ')
+      for (const result of generationResults) {
         const res = await fetch('/api/activities', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lessonId: lesson.id,
-            type: selectedTypes[0] ?? 'SPIEGAZIONE',
-            title: `${activityTypeLabels} — ${lesson.title}`,
-            content: generatedContent,
+            type: result.type,
+            title: `${ACTIVITY_SHORT_LABELS[result.type] ?? result.type} — ${lesson.title}`,
+            content: result.content,
             aiGenerated: true,
           }),
         })
         const json = await res.json()
         if (!json.success) throw new Error(json.message)
       }
-
       setIsSaved(true)
       onSaved()
     } catch (err) {
@@ -221,9 +210,12 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
@@ -247,38 +239,21 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
             return (
               <div key={label} className="flex items-center">
                 <div className="flex items-center gap-1.5">
-                  <div
-                    className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors',
-                      isActive
-                        ? 'bg-[#534AB7] text-white'
-                        : isDone
-                          ? 'bg-[#1D9E75] text-white'
-                          : 'bg-gray-200 text-gray-500'
-                    )}
-                  >
+                  <div className={cn(
+                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors',
+                    isActive ? 'bg-[#534AB7] text-white' : isDone ? 'bg-[#1D9E75] text-white' : 'bg-gray-200 text-gray-500'
+                  )}>
                     {isDone ? <Check size={12} /> : stepNum}
                   </div>
-                  <span
-                    className={cn(
-                      'text-xs font-medium hidden sm:block',
-                      isActive
-                        ? 'text-[#534AB7]'
-                        : isDone
-                          ? 'text-[#1D9E75]'
-                          : 'text-gray-400'
-                    )}
-                  >
+                  <span className={cn(
+                    'text-xs font-medium hidden sm:block',
+                    isActive ? 'text-[#534AB7]' : isDone ? 'text-[#1D9E75]' : 'text-gray-400'
+                  )}>
                     {label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div
-                    className={cn(
-                      'h-px w-8 sm:w-14 mx-2',
-                      isDone ? 'bg-[#1D9E75]' : 'bg-gray-200'
-                    )}
-                  />
+                  <div className={cn('h-px w-8 sm:w-14 mx-2', isDone ? 'bg-[#1D9E75]' : 'bg-gray-200')} />
                 )}
               </div>
             )
@@ -287,55 +262,38 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
 
         {/* ── Content ── */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
+
           {/* Step 1 — Riepilogo lezione */}
           {step === 1 && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
-                Verifica i dati della lezione prima di procedere.
-              </p>
+              <p className="text-sm text-gray-500">Verifica i dati della lezione prima di procedere.</p>
               <div className="bg-[#F8F7FF] rounded-xl p-5 space-y-4">
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                    Disciplina
-                  </p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Disciplina</p>
                   <p className="text-sm font-medium text-[#1A1A2E]">
-                    {course.subject} — {course.classYear}ª {course.classSection}{' '}
-                    {course.schoolType}
+                    {course.subject} — {course.classYear}ª {course.classSection} {course.schoolType}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                    Titolo lezione
-                  </p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Titolo lezione</p>
                   <p className="text-sm font-medium text-[#1A1A2E]">{lesson.title}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                    Metodologia
-                  </p>
-                  <span
-                    className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full text-white"
-                    style={{ backgroundColor: methodology.color }}
-                  >
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Metodologia</p>
+                  <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: methodology.color }}>
                     {methodology.label}
                   </span>
                 </div>
                 {lesson.objectives && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                      Obiettivi
-                    </p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Obiettivi</p>
                     <p className="text-sm text-gray-700 leading-relaxed">{lesson.objectives}</p>
                   </div>
                 )}
                 {lesson.prerequisites && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                      Prerequisiti
-                    </p>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {lesson.prerequisites}
-                    </p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Prerequisiti</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{lesson.prerequisites}</p>
                   </div>
                 )}
               </div>
@@ -345,9 +303,7 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
           {/* Step 2 — Cosa generare */}
           {step === 2 && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
-                Seleziona uno o più tipi di contenuto da generare.
-              </p>
+              <p className="text-sm text-gray-500">Seleziona uno o più tipi di contenuto da generare.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {ACTIVITY_TYPES.map((type) => {
                   const isSelected = selectedTypes.includes(type.key)
@@ -358,9 +314,7 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                       onClick={() => toggleType(type.key)}
                       className={cn(
                         'flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 text-left transition-all',
-                        isSelected
-                          ? 'border-[#534AB7] bg-[#EEEDFE] text-[#534AB7]'
-                          : 'border-gray-200 text-gray-700 hover:border-gray-300 bg-white'
+                        isSelected ? 'border-[#534AB7] bg-[#EEEDFE] text-[#534AB7]' : 'border-gray-200 text-gray-700 hover:border-gray-300 bg-white'
                       )}
                     >
                       <span className="text-lg leading-none">{type.emoji}</span>
@@ -388,25 +342,15 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                       onClick={() => setTone(t.key)}
                       className={cn(
                         'text-left px-4 py-3 rounded-xl border-2 transition-all',
-                        tone === t.key
-                          ? 'border-[#534AB7] bg-[#EEEDFE]'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                        tone === t.key ? 'border-[#534AB7] bg-[#EEEDFE]' : 'border-gray-200 hover:border-gray-300 bg-white'
                       )}
                     >
-                      <p
-                        className={cn(
-                          'font-medium text-sm',
-                          tone === t.key ? 'text-[#534AB7]' : 'text-gray-800'
-                        )}
-                      >
-                        {t.label}
-                      </p>
+                      <p className={cn('font-medium text-sm', tone === t.key ? 'text-[#534AB7]' : 'text-gray-800')}>{t.label}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
                     </button>
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                   Istruzioni aggiuntive per l&apos;IA{' '}
@@ -416,7 +360,7 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                   value={additionalInstructions}
                   onChange={(e) => setAdditionalInstructions(e.target.value)}
                   rows={4}
-                  placeholder="es. Includi riferimenti al programma ministeriale. Usa esempi dalla vita quotidiana. Inserisci collegamenti interdisciplinari..."
+                  placeholder="es. Includi riferimenti al programma ministeriale. Usa esempi dalla vita quotidiana..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#534AB7] resize-none"
                 />
               </div>
@@ -426,16 +370,14 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
           {/* Step 4 — Generazione e anteprima */}
           {step === 4 && (
             <div className="space-y-4">
+
               {/* Stato iniziale: pronto a generare */}
-              {!generatedContent && !isGenerating && (
+              {!hasResults && !isGenerating && (
                 <div className="text-center py-10">
                   <div className="text-4xl mb-3">✦</div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">
-                    Pronto a generare il contenuto
-                  </p>
+                  <p className="text-gray-600 text-sm font-medium mb-1">Pronto a generare il contenuto</p>
                   <p className="text-gray-400 text-xs">
-                    {selectedTypes.map((t) => ACTIVITY_SHORT_LABELS[t] ?? t).join(', ')} · Tono:{' '}
-                    {tone}
+                    {selectedTypes.map((t) => ACTIVITY_SHORT_LABELS[t] ?? t).join(', ')} · Tono: {tone}
                   </p>
                 </div>
               )}
@@ -443,21 +385,51 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
               {/* Streaming in corso */}
               {isGenerating && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-[#534AB7]">
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>Generazione in corso...</span>
+                  {/* Barra progresso tipi */}
+                  <div className="flex items-center gap-3">
+                    <Loader2 size={14} className="animate-spin text-[#534AB7] shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-[#534AB7] font-medium">
+                        {currentIndex >= 0
+                          ? `Generando ${currentIndex + 1} di ${selectedTypes.length}: ${ACTIVITY_SHORT_LABELS[selectedTypes[currentIndex]] ?? selectedTypes[currentIndex]}...`
+                          : 'Avvio generazione...'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-[#F8F7FF] rounded-lg p-4 min-h-40 text-sm text-gray-700 font-mono whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto border border-[#EEEDFE]">
-                    {generatedContent || '…'}
+
+                  {/* Pallini di avanzamento per tipo */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {selectedTypes.map((t, i) => {
+                      const done = i < currentIndex || (i === currentIndex && !isGenerating)
+                      const active = i === currentIndex && isGenerating
+                      return (
+                        <span
+                          key={t}
+                          className={cn(
+                            'text-xs px-2.5 py-1 rounded-full font-medium transition-colors',
+                            done ? 'bg-[#1D9E75] text-white' : active ? 'bg-[#534AB7] text-white' : 'bg-gray-100 text-gray-400'
+                          )}
+                        >
+                          {done ? '✓ ' : ''}{ACTIVITY_SHORT_LABELS[t] ?? t}
+                        </span>
+                      )
+                    })}
+                  </div>
+
+                  {/* Preview streaming */}
+                  <div className="bg-[#F8F7FF] rounded-lg p-4 min-h-40 text-sm text-gray-700 font-mono whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto border border-[#EEEDFE]">
+                    {currentStream || '…'}
                   </div>
                 </div>
               )}
 
-              {/* Contenuto pronto */}
-              {generatedContent && !isGenerating && (
+              {/* Contenuto pronto — tabs per tipo */}
+              {hasResults && !isGenerating && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-[#1A1A2E]">Contenuto generato</p>
+                    <p className="text-sm font-medium text-[#1A1A2E]">
+                      {generationResults.length === 1 ? 'Contenuto generato' : `${generationResults.length} contenuti generati`}
+                    </p>
                     <button
                       type="button"
                       onClick={() => setIsEditing((e) => !e)}
@@ -467,18 +439,43 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                     </button>
                   </div>
 
-                  <div className="max-h-[400px] overflow-y-auto rounded-lg border border-gray-200">
+                  {/* Tab selector (solo se più di 1 risultato) */}
+                  {generationResults.length > 1 && (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {generationResults.map((r, i) => (
+                        <button
+                          key={r.type}
+                          type="button"
+                          onClick={() => { setPreviewIndex(i); setIsEditing(false) }}
+                          className={cn(
+                            'text-xs px-3 py-1.5 rounded-lg font-medium transition-colors border',
+                            previewIndex === i
+                              ? 'bg-[#534AB7] text-white border-[#534AB7]'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#534AB7] hover:text-[#534AB7]'
+                          )}
+                        >
+                          {ACTIVITY_SHORT_LABELS[r.type] ?? r.type}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="max-h-[380px] overflow-y-auto rounded-lg border border-gray-200">
                     <ContentViewer
-                      content={generatedContent}
+                      content={generationResults[previewIndex]?.content ?? ''}
                       editable={isEditing}
-                      onChange={setGeneratedContent}
+                      onChange={(val) => updateResultContent(previewIndex, val)}
                     />
                   </div>
 
                   {isSaved && (
                     <div className="flex items-center gap-2 text-sm text-[#1D9E75] bg-green-50 border border-green-200 rounded-lg px-4 py-2.5">
                       <Check size={14} />
-                      <span>Attività salvata con successo nella lezione!</span>
+                      <span>
+                        {generationResults.length === 1
+                          ? 'Attività salvata con successo!'
+                          : `${generationResults.length} attività salvate con successo!`}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -496,7 +493,6 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
 
         {/* ── Footer ── */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50/50 rounded-b-2xl">
-          {/* Pulsante indietro / annulla */}
           <button
             type="button"
             onClick={() => (step > 1 ? setStep((s) => s - 1) : onClose())}
@@ -506,13 +502,12 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
             {step > 1 ? 'Indietro' : 'Annulla'}
           </button>
 
-          {/* Pulsanti avanti / azione */}
           <div className="flex items-center gap-2">
-            {/* Step 4: pulsanti azione */}
+            {/* Step 4: azioni */}
             {step === 4 && (
               <>
-                {/* Rigenera (solo se c'è già un contenuto) */}
-                {generatedContent && !isGenerating && (
+                {/* Rigenera */}
+                {(hasResults || error) && !isGenerating && (
                   <button
                     type="button"
                     onClick={handleGenerate}
@@ -523,8 +518,8 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                   </button>
                 )}
 
-                {/* Genera (se non c'è ancora contenuto e non sta generando) */}
-                {!generatedContent && !isGenerating && (
+                {/* Genera (prima volta) */}
+                {!hasResults && !isGenerating && !error && (
                   <button
                     type="button"
                     onClick={handleGenerate}
@@ -535,20 +530,16 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                   </button>
                 )}
 
-                {/* Salva (se c'è contenuto, non sta generando, non è ancora salvato) */}
-                {generatedContent && !isGenerating && !isSaved && (
+                {/* Salva */}
+                {hasResults && !isGenerating && !isSaved && (
                   <button
                     type="button"
                     onClick={handleSave}
                     disabled={isSaving}
                     className="flex items-center gap-1.5 px-5 py-2 bg-[#1D9E75] hover:bg-[#178a63] disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
                   >
-                    {isSaving ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Save size={14} />
-                    )}
-                    {isSaving ? 'Salvataggio...' : 'Salva attività'}
+                    {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    {isSaving ? 'Salvataggio...' : `Salva ${generationResults.length > 1 ? `(${generationResults.length})` : 'attività'}`}
                   </button>
                 )}
 
@@ -566,7 +557,7 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
               </>
             )}
 
-            {/* Step 1-3: pulsante avanti */}
+            {/* Step 1-3: avanti */}
             {step < 4 && (
               <button
                 type="button"
@@ -592,6 +583,7 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
             )}
           </div>
         </div>
+
       </div>
     </div>
   )
