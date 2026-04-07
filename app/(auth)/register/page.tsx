@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, MailCheck } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -52,6 +53,7 @@ export default function RegisterPage() {
       return
     }
 
+    // Crea il record nel DB
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,8 +72,59 @@ export default function RegisterPage() {
       return
     }
 
-    router.push('/dashboard')
-    router.refresh()
+    // Se la sessione è già attiva (conferma email disabilitata) vai alla dashboard
+    if (data.session) {
+      router.push('/dashboard')
+      router.refresh()
+      return
+    }
+
+    // Altrimenti mostra il messaggio di conferma email
+    setEmailSent(true)
+    setLoading(false)
+  }
+
+  // Schermata di conferma email inviata
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-[#F8F7FF] flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-[#534AB7]">master-of-courses</h1>
+            <p className="text-sm text-gray-500 mt-1">Piattaforma per docenti</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+            <div className="w-16 h-16 bg-[#EEEDFE] rounded-full flex items-center justify-center mx-auto mb-4">
+              <MailCheck size={28} className="text-[#534AB7]" />
+            </div>
+
+            <h2 className="text-xl font-semibold text-[#1A1A2E] mb-3">
+              Controlla la tua email
+            </h2>
+
+            <p className="text-gray-500 text-sm leading-relaxed mb-2">
+              Abbiamo inviato un link di conferma a:
+            </p>
+            <p className="font-medium text-[#534AB7] text-sm mb-6">
+              {form.email}
+            </p>
+
+            <p className="text-gray-400 text-xs leading-relaxed mb-6">
+              Clicca sul link nell&apos;email per attivare il tuo account e accedere alla piattaforma.
+              Controlla anche la cartella spam se non lo trovi.
+            </p>
+
+            <Link
+              href="/login"
+              className="inline-block px-5 py-2.5 bg-[#534AB7] hover:bg-[#3C3489] text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Vai al login
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -88,10 +141,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Nome completo
               </label>
               <input
@@ -107,10 +157,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email
               </label>
               <input
@@ -126,10 +173,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -156,10 +200,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="school"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
+              <label htmlFor="school" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Nome scuola{' '}
                 <span className="text-gray-400 font-normal">(opzionale)</span>
               </label>
@@ -172,6 +213,11 @@ export default function RegisterPage() {
                 placeholder="I.I.S. Galileo Galilei"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent"
               />
+            </div>
+
+            {/* Avviso email di conferma */}
+            <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-xs text-blue-700">
+              📧 Dopo la registrazione riceverai una email di conferma. Dovrai cliccare sul link per attivare il tuo account.
             </div>
 
             {error && (
@@ -191,10 +237,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Hai già un account?{' '}
-            <Link
-              href="/login"
-              className="text-[#534AB7] hover:underline font-medium"
-            >
+            <Link href="/login" className="text-[#534AB7] hover:underline font-medium">
               Accedi
             </Link>
           </p>
