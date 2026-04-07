@@ -4,12 +4,13 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 import { DeleteLessonButton } from '@/components/lessons/DeleteLessonButton'
+import { LessonActivitiesSection } from '@/components/lessons/LessonActivitiesSection'
 
-const METHODOLOGY_LABELS: Record<string, string> = {
-  STANDARD: 'Standard',
-  FIVE_E: 'Modello 5E',
-  LAB: 'Laboratoriale',
-  FLIPPED: 'Flipped Classroom',
+const METHODOLOGY_INFO: Record<string, { label: string; color: string }> = {
+  FIVE_E: { label: 'Modello 5E', color: '#534AB7' },
+  LAB: { label: 'Laboratoriale', color: '#1D9E75' },
+  STANDARD: { label: 'Standard', color: '#185FA5' },
+  FLIPPED: { label: 'Flipped Classroom', color: '#BA7517' },
 }
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
@@ -45,6 +46,8 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
   if (lesson.module.course.userId !== user.id) redirect('/courses')
 
   const course = lesson.module.course
+  const methodology =
+    METHODOLOGY_INFO[lesson.methodology] ?? { label: lesson.methodology, color: '#534AB7' }
   const status = STATUS_LABELS[lesson.status] ?? STATUS_LABELS.DRAFT
 
   return (
@@ -71,12 +74,21 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
               {status.label}
             </span>
           </div>
-          <p className="text-sm text-gray-500">
-            {METHODOLOGY_LABELS[lesson.methodology]} ·{' '}
-            {lesson.durationHours === 4
-              ? 'Più lezioni'
-              : `${lesson.durationHours} ${lesson.durationHours === 1 ? 'ora' : 'ore'}`}
-          </p>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            {/* Badge metodologia con colore */}
+            <span
+              className="text-xs font-semibold px-2.5 py-1 rounded-full text-white"
+              style={{ backgroundColor: methodology.color }}
+            >
+              {methodology.label}
+            </span>
+            <span>·</span>
+            <span>
+              {lesson.durationHours === 4
+                ? 'Più lezioni'
+                : `${lesson.durationHours} ${lesson.durationHours === 1 ? 'ora' : 'ore'}`}
+            </span>
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -91,54 +103,44 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
         </div>
       </div>
 
-      {/* Dettagli */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        {lesson.objectives && (
-          <div className="bg-[#F8F7FF] rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-[#534AB7] mb-2">
-              Obiettivi di apprendimento
-            </h3>
-            <p className="text-sm text-gray-700 leading-relaxed">{lesson.objectives}</p>
-          </div>
-        )}
-
-        {lesson.prerequisites && (
-          <div className="bg-[#F8F7FF] rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-[#534AB7] mb-2">Prerequisiti</h3>
-            <p className="text-sm text-gray-700 leading-relaxed">{lesson.prerequisites}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Attività (placeholder per Fase 2) */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#1A1A2E]">Attività</h2>
-          <span className="text-xs text-gray-400 italic">
-            Generazione con AI disponibile nella Fase 2
-          </span>
+      {/* Dettagli (obiettivi e prerequisiti) */}
+      {(lesson.objectives || lesson.prerequisites) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          {lesson.objectives && (
+            <div className="bg-[#F8F7FF] rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-[#534AB7] mb-2">
+                Obiettivi di apprendimento
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">{lesson.objectives}</p>
+            </div>
+          )}
+          {lesson.prerequisites && (
+            <div className="bg-[#F8F7FF] rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-[#534AB7] mb-2">Prerequisiti</h3>
+              <p className="text-sm text-gray-700 leading-relaxed">{lesson.prerequisites}</p>
+            </div>
+          )}
         </div>
+      )}
 
-        {lesson.activities.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
-            <p className="text-gray-400 text-sm">
-              Le attività verranno generate con l&apos;AI nella Fase 2.
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-3">
-            {lesson.activities.map((activity) => (
-              <li
-                key={activity.id}
-                className="border border-gray-200 rounded-xl p-4 text-sm"
-              >
-                <p className="font-medium text-gray-800">{activity.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{activity.type}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {/* Sezione attività — componente client con wizard AI integrato */}
+      <LessonActivitiesSection
+        lesson={{
+          id: lesson.id,
+          title: lesson.title,
+          objectives: lesson.objectives,
+          prerequisites: lesson.prerequisites,
+          methodology: lesson.methodology,
+          durationHours: lesson.durationHours,
+        }}
+        course={{
+          subject: course.subject,
+          classYear: course.classYear,
+          schoolType: course.schoolType,
+          classSection: course.classSection,
+        }}
+        activities={lesson.activities}
+      />
     </div>
   )
 }

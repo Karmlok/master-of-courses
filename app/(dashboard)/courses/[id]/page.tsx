@@ -132,9 +132,31 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                       >
                         <span className="text-sm text-gray-800">{lesson.title}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 capitalize">
-                            {lesson.methodology.toLowerCase().replace('_', ' ')}
-                          </span>
+                          {/* Badge metodologia con colore */}
+                          {(() => {
+                            const colors: Record<string, string> = {
+                              FIVE_E: '#534AB7',
+                              LAB: '#1D9E75',
+                              STANDARD: '#185FA5',
+                              FLIPPED: '#BA7517',
+                            }
+                            const labels: Record<string, string> = {
+                              FIVE_E: '5E',
+                              LAB: 'Lab',
+                              STANDARD: 'Standard',
+                              FLIPPED: 'Flipped',
+                            }
+                            const color = colors[lesson.methodology] ?? '#534AB7'
+                            const label = labels[lesson.methodology] ?? lesson.methodology
+                            return (
+                              <span
+                                className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+                                style={{ backgroundColor: color }}
+                              >
+                                {label}
+                              </span>
+                            )
+                          })()}
                           <span
                             className={`text-xs px-2 py-0.5 rounded-full ${
                               lesson.status === 'PUBLISHED'
