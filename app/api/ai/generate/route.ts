@@ -145,6 +145,7 @@ function buildUserPrompt(params: {
   }
 
   const activityLabels: Record<string, string> = {
+    PIANO: 'Piano di lezione completo (obiettivi, fasi temporizzate, materiali, metodologia dettagliata)',
     SPIEGAZIONE: 'Spiegazione teorica completa',
     ESERCIZI: 'Serie di esercizi graduati (almeno 5)',
     VERIFICA: 'Verifica formativa (domande aperte e/o a scelta multipla)',

@@ -99,6 +99,7 @@ model Activity {
 }
 
 enum ActivityType {
+  PIANO
   SPIEGAZIONE
   ESERCIZI
   VERIFICA

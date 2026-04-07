@@ -24,9 +24,10 @@ const METHODOLOGY_INFO: Record<string, { label: string; color: string }> = {
 }
 
 const ACTIVITY_TYPES = [
+  { key: 'PIANO', label: 'Piano di lezione', emoji: '📋' },
   { key: 'SPIEGAZIONE', label: 'Spiegazione teorica', emoji: '📖' },
   { key: 'ESERCIZI', label: 'Esercizi', emoji: '✏️' },
-  { key: 'VERIFICA', label: 'Verifica formativa', emoji: '📋' },
+  { key: 'VERIFICA', label: 'Verifica formativa', emoji: '📝' },
   { key: 'SCHEDA', label: 'Scheda studente', emoji: '📄' },
   { key: 'DIAPOSITIVE', label: 'Scaletta diapositive', emoji: '🖥️' },
   { key: 'COMPITO', label: 'Compito per casa', emoji: '🏠' },
@@ -56,6 +57,7 @@ const TONES = [
 ]
 
 const ACTIVITY_SHORT_LABELS: Record<string, string> = {
+  PIANO: 'Piano',
   SPIEGAZIONE: 'Spiegazione',
   ESERCIZI: 'Esercizi',
   VERIFICA: 'Verifica',
@@ -83,15 +85,18 @@ interface GenerateWizardProps {
     schoolType: string
     classSection: string
   }
+  defaultTypes?: string[] // Pre-seleziona i tipi allo Step 2
   onClose: () => void
   onSaved: () => void
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function GenerateWizard({ lesson, course, onClose, onSaved }: GenerateWizardProps) {
+export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved }: GenerateWizardProps) {
   const [step, setStep] = useState(1)
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(['SPIEGAZIONE', 'ESERCIZI'])
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    defaultTypes && defaultTypes.length > 0 ? defaultTypes : ['SPIEGAZIONE', 'ESERCIZI']
+  )
   const [tone, setTone] = useState('accessibile')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
   const [generatedContent, setGeneratedContent] = useState('')
