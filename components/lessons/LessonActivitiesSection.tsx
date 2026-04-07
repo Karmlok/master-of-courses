@@ -2,18 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trash2, Sparkles, Bot } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { GenerateWizard } from '@/components/ai/GenerateWizard'
+import { ActivityCard } from '@/components/lessons/ActivityCard'
 import type { Activity } from '@prisma/client'
-
-const ACTIVITY_LABELS: Record<string, string> = {
-  SPIEGAZIONE: 'Spiegazione',
-  ESERCIZI: 'Esercizi',
-  VERIFICA: 'Verifica',
-  SCHEDA: 'Scheda',
-  DIAPOSITIVE: 'Diapositive',
-  COMPITO: 'Compito',
-}
 
 interface LessonForWizard {
   id: string
@@ -99,42 +91,12 @@ export function LessonActivitiesSection({
       ) : (
         <div className="space-y-4">
           {activities.map((activity) => (
-            <div
+            <ActivityCard
               key={activity.id}
-              className="border border-gray-200 rounded-xl overflow-hidden"
-            >
-              {/* Intestazione attività */}
-              <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-semibold text-[#1A1A2E]">{activity.title}</h3>
-                  <span className="text-xs px-2 py-0.5 bg-[#EEEDFE] text-[#534AB7] rounded-full font-medium">
-                    {ACTIVITY_LABELS[activity.type] ?? activity.type}
-                  </span>
-                  {activity.aiGenerated && (
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded-full font-medium">
-                      <Bot size={10} />
-                      Generato con IA
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleDelete(activity.id)}
-                  disabled={deletingId === activity.id}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40 ml-2 shrink-0"
-                  title="Elimina attività"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-
-              {/* Contenuto HTML renderizzato */}
-              {activity.content && (
-                <div
-                  className="ai-content px-5 py-4"
-                  dangerouslySetInnerHTML={{ __html: activity.content }}
-                />
-              )}
-            </div>
+              activity={activity}
+              onDelete={handleDelete}
+              isDeleting={deletingId === activity.id}
+            />
           ))}
         </div>
       )}
