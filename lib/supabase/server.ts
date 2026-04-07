@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -12,15 +12,13 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Il metodo setAll viene chiamato da Server Components dove non è
-            // possibile impostare cookie. Si può ignorare se il middleware
-            // gestisce il refresh della sessione.
+            // Ignorato nei Server Components — il middleware gestisce il refresh
           }
         },
       },
