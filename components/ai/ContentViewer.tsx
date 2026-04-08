@@ -2,8 +2,6 @@
 
 import { useRef, useEffect } from 'react'
 
-// ─── Tipo globale per KaTeX auto-render ───────────────────────────────────────
-
 declare global {
   interface Window {
     renderMathInElement?: (el: HTMLElement, options?: object) => void
@@ -20,25 +18,31 @@ const KATEX_OPTIONS = {
   throwOnError: false,
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface ContentViewerProps {
   content: string
   editable?: boolean
   onChange?: (value: string) => void
 }
 
-// ─── Componente ───────────────────────────────────────────────────────────────
-
 export function ContentViewer({ content, editable, onChange }: ContentViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Renderizza le formule KaTeX ogni volta che il contenuto cambia
   useEffect(() => {
     if (editable || !containerRef.current) return
-    if (typeof window !== 'undefined' && window.renderMathInElement) {
-      window.renderMathInElement(containerRef.current, KATEX_OPTIONS)
+    const el = containerRef.current
+
+    const render = () => {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(el, KATEX_OPTIONS)
+      }
     }
+
+    // Prova subito (KaTeX potrebbe essere già caricato)
+    render()
+
+    // Ascolta l'evento nel caso KaTeX non fosse ancora pronto
+    window.addEventListener('katex-ready', render)
+    return () => window.removeEventListener('katex-ready', render)
   }, [content, editable])
 
   if (editable) {

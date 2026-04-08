@@ -221,12 +221,20 @@ export function ActivityPanel({
     return () => observer.disconnect()
   }, [showTOC, processedHtml, activity?.content])
 
-  // Rendering KaTeX dopo ogni aggiornamento del contenuto
+  // Rendering KaTeX: prova subito e ascolta 'katex-ready' se non ancora caricato
   useEffect(() => {
-    if (!contentRef.current) return
-    if (typeof window !== 'undefined' && window.renderMathInElement) {
-      window.renderMathInElement(contentRef.current, KATEX_OPTIONS)
+    const el = contentRef.current
+    if (!el) return
+
+    const render = () => {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(el, KATEX_OPTIONS)
+      }
     }
+
+    render()
+    window.addEventListener('katex-ready', render)
+    return () => window.removeEventListener('katex-ready', render)
   }, [processedHtml])
 
   function scrollToSection(id: string) {

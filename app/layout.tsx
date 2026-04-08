@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
-import Script from 'next/script'
+import { KaTeXInit } from '@/components/KaTeXInit'
 import './globals.css'
 
 const geistSans = Geist({
@@ -22,15 +22,7 @@ export default function RootLayout({
     <html lang="it" className={`${geistSans.variable} h-full`}>
       <body className="min-h-full antialiased text-[#1A1A2E]">
         {children}
-        {/* KaTeX — rendering formule matematiche */}
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
-          strategy="afterInteractive"
-        />
+        <KaTeXInit />
       </body>
     </html>
   )
