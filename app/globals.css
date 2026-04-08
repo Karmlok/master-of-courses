@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css');
 
 @theme inline {
   --color-primary: #534AB7;

@@ -20,24 +20,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" className={`${geistSans.variable} h-full`}>
-      <head>
-        {/* KaTeX — rendering formule matematiche */}
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body className="min-h-full antialiased text-[#1A1A2E]">
         {children}
+        {/* KaTeX — rendering formule matematiche */}
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"
-          crossOrigin="anonymous"
           strategy="afterInteractive"
         />
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
-          crossOrigin="anonymous"
           strategy="afterInteractive"
         />
       </body>

@@ -97,9 +97,10 @@ Esempi corretti: $\\vec{F} = m\\vec{a}$, $\\int_0^\\infty e^{-x^2}dx$, $\\sum_{i
       },
     })
   } catch (error) {
-    console.error('AI generation error:', error)
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('AI generation error:', message)
     return Response.json(
-      { success: false, message: 'Errore nella generazione' },
+      { success: false, message },
       { status: 500 }
     )
   }
