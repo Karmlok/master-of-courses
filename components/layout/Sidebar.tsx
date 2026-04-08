@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { BookOpen, LayoutDashboard, LogOut, Settings, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { Avatar } from '@/components/ui/Avatar'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -14,9 +15,11 @@ const navItems = [
 
 interface SidebarProps {
   role: string
+  name: string
+  avatarUrl: string | null
 }
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ role, name, avatarUrl }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -31,7 +34,7 @@ export function Sidebar({ role }: SidebarProps) {
     <aside className="w-64 min-h-screen bg-[#F8F7FF] border-r border-gray-200 flex flex-col">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-200">
-        <h1 className="text-lg font-semibold text-[#534AB7]">master-of-courses</h1>
+        <h1 className="text-lg font-semibold text-[#534AB7]">Master of Courses</h1>
         <p className="text-xs text-gray-500 mt-0.5">Piattaforma per docenti</p>
       </div>
 
@@ -57,7 +60,6 @@ export function Sidebar({ role }: SidebarProps) {
           )
         })}
 
-        {/* Link Admin — visibile solo agli admin */}
         {role === 'ADMIN' && (
           <Link
             href="/admin"
@@ -74,18 +76,39 @@ export function Sidebar({ role }: SidebarProps) {
         )}
       </nav>
 
-      {/* Footer */}
+      {/* Footer con avatar */}
       <div className="px-3 py-4 border-t border-gray-200 space-y-1">
+        {/* Utente */}
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+            pathname.startsWith('/settings')
+              ? 'bg-[#EEEDFE]'
+              : 'hover:bg-gray-100'
+          )}
         >
-          <Settings size={18} />
-          Impostazioni
+          <Avatar name={name || 'U'} avatarUrl={avatarUrl} size="sm" />
+          <div className="flex-1 min-w-0">
+            <p className={cn(
+              'text-sm font-medium truncate',
+              pathname.startsWith('/settings') ? 'text-[#534AB7]' : 'text-[#1A1A2E]'
+            )}>
+              {name || 'Utente'}
+            </p>
+            <p className={cn(
+              'text-xs',
+              pathname.startsWith('/settings') ? 'text-[#534AB7]/70' : 'text-gray-400'
+            )}>
+              Impostazioni
+            </p>
+          </div>
+          <Settings size={14} className={pathname.startsWith('/settings') ? 'text-[#534AB7]' : 'text-gray-400'} />
         </Link>
+
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
         >
           <LogOut size={18} />
           Esci

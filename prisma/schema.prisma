@@ -11,8 +11,9 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
-  school    String?
-  role      Role     @default(TEACHER)
+  school     String?
+  avatarUrl  String?  @map("avatar_url")
+  role       Role     @default(TEACHER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

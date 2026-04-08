@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
 
   const isRootPage = request.nextUrl.pathname === '/'
 
-  if (!user && !isAuthPage) {
+  if (!user && !isAuthPage && !isRootPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
