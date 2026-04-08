@@ -9,6 +9,7 @@ import type { Activity } from '@prisma/client'
 declare global {
   interface Window {
     renderMathInElement?: (el: HTMLElement, options?: object) => void
+    __katexReady?: boolean
   }
 }
 
@@ -232,7 +233,11 @@ export function ActivityPanel({
       }
     }
 
-    render()
+    if (window.__katexReady) {
+      render()
+      return
+    }
+
     window.addEventListener('katex-ready', render)
     return () => window.removeEventListener('katex-ready', render)
   }, [processedHtml])

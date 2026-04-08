@@ -5,6 +5,7 @@ import { useRef, useEffect } from 'react'
 declare global {
   interface Window {
     renderMathInElement?: (el: HTMLElement, options?: object) => void
+    __katexReady?: boolean
   }
 }
 
@@ -37,10 +38,13 @@ export function ContentViewer({ content, editable, onChange }: ContentViewerProp
       }
     }
 
-    // Prova subito (KaTeX potrebbe essere già caricato)
-    render()
+    // Se KaTeX è già caricato, renderizza subito e non serve ascoltare
+    if (window.__katexReady) {
+      render()
+      return
+    }
 
-    // Ascolta l'evento nel caso KaTeX non fosse ancora pronto
+    // Altrimenti ascolta l'evento di caricamento
     window.addEventListener('katex-ready', render)
     return () => window.removeEventListener('katex-ready', render)
   }, [content, editable])

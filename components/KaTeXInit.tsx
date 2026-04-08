@@ -17,6 +17,7 @@ export function KaTeXInit() {
         src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
         strategy="afterInteractive"
         onLoad={() => {
+          window.__katexReady = true
           window.dispatchEvent(new Event('katex-ready'))
         }}
       />
