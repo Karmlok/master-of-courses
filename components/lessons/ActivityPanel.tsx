@@ -68,6 +68,7 @@ function exportPDF(title: string, content: string) {
 <head>
   <meta charset="UTF-8">
   <title>${title}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Georgia, serif; max-width: 800px; margin: 2cm auto; color: #1a1a2e; font-size: 11pt; line-height: 1.65; }
@@ -88,11 +89,23 @@ function exportPDF(title: string, content: string) {
   <p class="doc-title">${title}</p>
   ${content}
   <p class="footer">Master of Courses — ${new Date().toLocaleDateString('it-IT')}</p>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"><\/script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ],
+        throwOnError: false
+      });
+      setTimeout(function() { window.print(); window.close(); }, 600);
+    });
+  <\/script>
 </body>
 </html>`)
   win.document.close()
-  win.focus()
-  setTimeout(() => { win.print(); win.close() }, 300)
 }
 
 // ─── Utility: export Word (.doc) ─────────────────────────────────────────────
