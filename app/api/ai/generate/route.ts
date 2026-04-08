@@ -46,7 +46,14 @@ Crei contenuti didattici professionali, chiari e coinvolgenti per i docenti.
 Rispondi sempre in italiano.
 Struttura il contenuto in HTML semantico pulito usando: <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>.
 Non usare mai markdown, solo HTML.
-Non includere tag <html>, <head>, <body> — solo il contenuto interno.`
+Non includere tag <html>, <head>, <body> — solo il contenuto interno.
+
+FORMULE MATEMATICHE E SCIENTIFICHE:
+Quando la materia richiede notazione matematica, usa la sintassi LaTeX con delimitatori KaTeX:
+- Formule inline (nel testo): $formula$ — es. $x^2 + 2x + 1 = 0$ oppure $E = mc^2$
+- Formule in blocco (su riga separata): $$formula$$ — es. $$\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+Usa sempre questa notazione per: frazioni, radicali, integrali, sommatorie, vettori, simboli greci, apici e pedici complessi.
+Esempi corretti: $\\vec{F} = m\\vec{a}$, $\\int_0^\\infty e^{-x^2}dx$, $\\sum_{i=1}^{n} x_i$, $H_2O$, $CO_2$.`
 
     const userPrompt = buildUserPrompt({
       lessonTitle,

@@ -4,6 +4,24 @@ import { useState, useEffect, useRef } from 'react'
 import { Sparkles, Trash2, FileDown, FileText, FileType2, Bot } from 'lucide-react'
 import type { Activity } from '@prisma/client'
 
+// ─── KaTeX auto-render ────────────────────────────────────────────────────────
+
+declare global {
+  interface Window {
+    renderMathInElement?: (el: HTMLElement, options?: object) => void
+  }
+}
+
+const KATEX_OPTIONS = {
+  delimiters: [
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+  ],
+  throwOnError: false,
+}
+
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -202,6 +220,14 @@ export function ActivityPanel({
     headings.forEach((h) => observer.observe(h))
     return () => observer.disconnect()
   }, [showTOC, processedHtml, activity?.content])
+
+  // Rendering KaTeX dopo ogni aggiornamento del contenuto
+  useEffect(() => {
+    if (!contentRef.current) return
+    if (typeof window !== 'undefined' && window.renderMathInElement) {
+      window.renderMathInElement(contentRef.current, KATEX_OPTIONS)
+    }
+  }, [processedHtml])
 
   function scrollToSection(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
