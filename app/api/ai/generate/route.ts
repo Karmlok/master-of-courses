@@ -55,7 +55,8 @@ Quando la materia richiede notazione matematica, usa la sintassi LaTeX con delim
 - Formule inline (nel testo): $formula$ — es. $x^2 + 2x + 1 = 0$ oppure $E = mc^2$
 - Formule in blocco (su riga separata): $$formula$$ — es. $$\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
 Usa sempre questa notazione per: frazioni, radicali, integrali, sommatorie, vettori, simboli greci, apici e pedici complessi.
-Esempi corretti: $\\vec{F} = m\\vec{a}$, $\\int_0^\\infty e^{-x^2}dx$, $\\sum_{i=1}^{n} x_i$, $H_2O$, $CO_2$.`
+Esempi corretti: $\\vec{F} = m\\vec{a}$, $\\int_0^\\infty e^{-x^2}dx$, $\\sum_{i=1}^{n} x_i$, $H_2O$, $CO_2$.
+REGOLA CRITICA: ogni formula deve apparire UNA SOLA VOLTA — solo in LaTeX. NON scrivere mai la stessa formula anche in testo semplice subito prima o dopo. Sbagliato: "$f(x) = x^3$f(x) = x³". Corretto: "$f(x) = x^3$".`
 
     const userPrompt = buildUserPrompt({
       lessonTitle,
