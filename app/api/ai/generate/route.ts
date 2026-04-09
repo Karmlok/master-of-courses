@@ -73,7 +73,7 @@ Esempi corretti: $\\vec{F} = m\\vec{a}$, $\\int_0^\\infty e^{-x^2}dx$, $\\sum_{i
 
     const stream = await anthropic.messages.stream({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     })
@@ -181,8 +181,10 @@ ${params.methodologyInstructions}
 
 TONO E STILE: ${toneMap[params.tone] ?? toneMap['accessibile']}
 
-CONTENUTI DA GENERARE:
+CONTENUTI DA GENERARE (SOLO QUESTI, NIENT'ALTRO):
 - ${requestedActivities}
+
+REGOLA IMPORTANTE: genera ESCLUSIVAMENTE i contenuti elencati sopra. Non aggiungere sezioni, esercizi, verifiche o altri materiali non richiesti esplicitamente.
 
 ${params.additionalInstructions ? `ISTRUZIONI AGGIUNTIVE: ${params.additionalInstructions}` : ''}
 
