@@ -158,6 +158,7 @@ export function LessonActivitiesSection({
 
         {/* Pannello destro — contenuto del tipo selezionato */}
         <ActivityPanel
+          key={activeActivity?.id ?? `empty-${selectedType}`}
           activity={activeActivity}
           selectedTypeLabel={selectedTypeInfo?.label ?? selectedType}
           onGenerate={() => openWizardForType(selectedType)}
