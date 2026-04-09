@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'

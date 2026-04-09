@@ -417,7 +417,10 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                   </div>
 
                   {/* Preview streaming */}
-                  <div className="bg-[#F8F7FF] rounded-lg p-4 min-h-40 text-sm text-gray-700 font-mono whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto border border-[#EEEDFE]">
+                  <div className={cn(
+                    "bg-[#F8F7FF] rounded-lg p-4 min-h-40 text-sm text-gray-700 font-mono whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto border border-[#EEEDFE]",
+                    isGenerating && "streaming-cursor"
+                  )}>
                     {currentStream || '…'}
                   </div>
                 </div>
