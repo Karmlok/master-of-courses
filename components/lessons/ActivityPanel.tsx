@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Sparkles, Trash2, FileDown, FileText, FileType2, Bot } from 'lucide-react'
 import type { Activity } from '@prisma/client'
+import { SimulationViewer } from '@/components/ai/SimulationViewer'
 
 // ─── KaTeX auto-render ────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   SCHEDA: 'Scheda',
   DIAPOSITIVE: 'Diapositive',
   COMPITO: 'Compito',
+  SIMULATION: 'Simulazione interattiva',
 }
 
 // ─── Utility: inietta ID nelle h2 per il TOC ──────────────────────────────────
@@ -283,7 +285,42 @@ export function ActivityPanel({
     )
   }
 
-  // ── Contenuto presente ───────────────────────────────────────────────────────
+  // ── Simulazione interattiva ──────────────────────────────────────────────────
+  if (activity.type === 'SIMULATION') {
+    return (
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Toolbar simulazione */}
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-gray-200 bg-gray-50/80">
+          <div className="flex items-center gap-2">
+            {activity.aiGenerated && (
+              <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded-full font-medium">
+                <Bot size={10} />
+                Generato con IA
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => onDelete(activity.id)}
+            disabled={isDeleting}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+            title="Elimina attività"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+
+        {/* SimulationViewer */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <SimulationViewer
+            htmlContent={activity.content ?? ''}
+            title={activity.title}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ── Contenuto presente (tipi standard) ──────────────────────────────────────
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* Toolbar */}

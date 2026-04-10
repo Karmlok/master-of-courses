@@ -107,4 +107,5 @@ enum ActivityType {
   SCHEDA
   DIAPOSITIVE
   COMPITO
+  SIMULATION
 }

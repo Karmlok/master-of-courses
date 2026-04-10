@@ -34,11 +34,72 @@ export async function POST(request: NextRequest) {
       activityTypes,
       tone,
       additionalInstructions,
+      simulationDescription,
       subject,
       classYear,
       schoolType,
     } = body
 
+    // ── Simulazione: percorso separato ───────────────────────────────────────
+    if (activityTypes[0] === 'SIMULATION') {
+      const simSystemPrompt = `Sei un esperto di didattica e sviluppo web. Crei simulazioni interattive HTML/CSS/JavaScript complete e autonome per la didattica delle scuole superiori italiane.
+
+REGOLE FONDAMENTALI:
+1. Genera SEMPRE una pagina HTML completa e autonoma (con <!DOCTYPE html>, <head>, <body>)
+2. Tutto il CSS deve essere inline nel <style> interno
+3. Tutto il JavaScript deve essere inline nel <script> interno
+4. NON usare librerie esterne CDN — solo vanilla HTML/CSS/JS
+5. La pagina deve funzionare offline, senza connessione internet
+6. Usa Canvas API o SVG per le visualizzazioni grafiche
+7. Rendi tutto responsive e utilizzabile su tablet
+8. Aggiungi commenti nel codice JavaScript per spiegare la logica
+9. Includi una breve guida d'uso per lo studente nella pagina
+10. Usa colori vivaci e un design moderno e accattivante
+11. Per le formule matematiche usa testo Unicode (es. ² √ ∫ π) — no LaTeX`
+
+      const simUserPrompt = `Crea una simulazione interattiva HTML completa per:
+
+MATERIA: ${subject}
+CLASSE: ${classYear}ª — ${schoolType}
+ARGOMENTO: ${lessonTitle}
+DESCRIZIONE SIMULAZIONE: ${simulationDescription || 'Simulazione interattiva sull\'argomento indicato'}
+
+La simulazione deve:
+- Essere visivamente accattivante e moderna
+- Avere controlli interattivi (slider, pulsanti, input) per esplorare il concetto
+- Mostrare feedback visivo immediato alle interazioni
+- Includere etichette e spiegazioni direttamente nella visualizzazione
+- Avere un titolo chiaro e una breve descrizione dell'obiettivo didattico
+- Funzionare perfettamente su desktop e tablet
+
+${additionalInstructions ? `ISTRUZIONI AGGIUNTIVE: ${additionalInstructions}` : ''}
+
+Genera il codice HTML completo e autonomo. Rispondi SOLO con il codice HTML, nient'altro.`
+
+      const simStream = await anthropic.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8000,
+        system: simSystemPrompt,
+        messages: [{ role: 'user', content: simUserPrompt }],
+      })
+
+      const simReadable = new ReadableStream({
+        async start(controller) {
+          for await (const chunk of simStream) {
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text))
+            }
+          }
+          controller.close()
+        },
+      })
+
+      return new Response(simReadable, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Transfer-Encoding': 'chunked' },
+      })
+    }
+
+    // ── Contenuto didattico standard ─────────────────────────────────────────
     // Converte l'enum Prisma nella chiave usata dal prompt
     const methodologyKey = METHODOLOGY_MAP[methodology] ?? 'standard'
     const methodologyInstructions = getMethodologyInstructions(methodologyKey)

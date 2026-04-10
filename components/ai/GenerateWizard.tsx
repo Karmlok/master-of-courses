@@ -31,6 +31,7 @@ const ACTIVITY_TYPES = [
   { key: 'SCHEDA', label: 'Scheda studente', emoji: '📄' },
   { key: 'DIAPOSITIVE', label: 'Scaletta diapositive', emoji: '🖥️' },
   { key: 'COMPITO', label: 'Compito per casa', emoji: '🏠' },
+  { key: 'SIMULATION', label: 'Simulazione interattiva', emoji: '▶️' },
 ]
 
 const TONES = [
@@ -48,6 +49,7 @@ const ACTIVITY_SHORT_LABELS: Record<string, string> = {
   SCHEDA: 'Scheda',
   DIAPOSITIVE: 'Diapositive',
   COMPITO: 'Compito',
+  SIMULATION: 'Simulazione',
 }
 
 const STEPS = ['Riepilogo', 'Contenuti', 'Stile', 'Generazione']
@@ -83,6 +85,9 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
   )
   const [tone, setTone] = useState('accessibile')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
+  const [simulationDescription, setSimulationDescription] = useState('')
+
+  const hasSimulation = selectedTypes.includes('SIMULATION')
 
   // Risultati per tipo: un record per ogni API call completata
   const [generationResults, setGenerationResults] = useState<Array<{ type: string; content: string }>>([])
@@ -142,6 +147,7 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
             activityTypes: [selectedTypes[i]], // UNA sola tipo per chiamata
             tone,
             additionalInstructions,
+            simulationDescription,
             subject: course.subject,
             classYear: course.classYear,
             schoolType: course.schoolType,
@@ -325,6 +331,25 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
               </div>
               {selectedTypes.length === 0 && (
                 <p className="text-xs text-red-500">Seleziona almeno un tipo di contenuto.</p>
+              )}
+
+              {/* Campo descrizione simulazione */}
+              {hasSimulation && (
+                <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <label className="block text-sm font-medium text-emerald-800 mb-1.5">
+                    Descrivi la simulazione <span className="text-emerald-600 font-normal">(obbligatorio)</span>
+                  </label>
+                  <textarea
+                    value={simulationDescription}
+                    onChange={(e) => setSimulationDescription(e.target.value)}
+                    rows={3}
+                    placeholder='es. "Punto mobile su parabola y=x² con retta tangente in tempo reale e valore della derivata"'
+                    className="w-full px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none bg-white"
+                  />
+                  <p className="text-xs text-emerald-600 mt-1">
+                    Più dettagli fornisci, più precisa sarà la simulazione generata.
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -566,9 +591,13 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                 type="button"
                 onClick={() => {
                   if (step === 2 && selectedTypes.length === 0) return
+                  if (step === 2 && hasSimulation && !simulationDescription.trim()) return
                   setStep((s) => s + 1)
                 }}
-                disabled={step === 2 && selectedTypes.length === 0}
+                disabled={
+                  (step === 2 && selectedTypes.length === 0) ||
+                  (step === 2 && hasSimulation && !simulationDescription.trim())
+                }
                 className="flex items-center gap-1.5 px-5 py-2 bg-[#534AB7] hover:bg-[#3C3489] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 {step === 3 ? (

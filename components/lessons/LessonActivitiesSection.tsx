@@ -17,6 +17,7 @@ const ALL_ACTIVITY_TYPES = [
   { key: 'SCHEDA', label: 'Scheda studente', emoji: '📄' },
   { key: 'DIAPOSITIVE', label: 'Scaletta slide', emoji: '🖥️' },
   { key: 'COMPITO', label: 'Compito per casa', emoji: '🏠' },
+  { key: 'SIMULATION', label: 'Simulazione', emoji: '▶️' },
 ]
 
 // ─── Tipi ─────────────────────────────────────────────────────────────────────
