@@ -42,39 +42,37 @@ export async function POST(request: NextRequest) {
 
     // ── Simulazione: percorso separato ───────────────────────────────────────
     if (activityTypes[0] === 'SIMULATION') {
-      const simSystemPrompt = `Sei un esperto di didattica e sviluppo web. Crei simulazioni interattive HTML/CSS/JavaScript complete e autonome per la didattica delle scuole superiori italiane.
+      const simSystemPrompt = `Sei un esperto di didattica e sviluppo web. Crei simulazioni interattive HTML/CSS/JavaScript compatte e autonome per le scuole superiori italiane.
 
-REGOLE FONDAMENTALI:
-1. Genera SEMPRE una pagina HTML completa e autonoma (con <!DOCTYPE html>, <head>, <body>)
-2. Tutto il CSS deve essere inline nel <style> interno
-3. Tutto il JavaScript deve essere inline nel <script> interno
-4. NON usare librerie esterne CDN — solo vanilla HTML/CSS/JS
-5. La pagina deve funzionare offline, senza connessione internet
-6. Usa Canvas API o SVG per le visualizzazioni grafiche
-7. Rendi tutto responsive e utilizzabile su tablet
-8. Aggiungi commenti nel codice JavaScript per spiegare la logica
-9. Includi una breve guida d'uso per lo studente nella pagina
-10. Usa colori vivaci e un design moderno e accattivante
-11. Per le formule matematiche usa testo Unicode (es. ² √ ∫ π) — no LaTeX`
+REGOLE — RISPETTALE TUTTE:
+1. Genera UNA pagina HTML completa (<!DOCTYPE html> … </html>) — massimo 300 righe totali
+2. CSS inline nel <style>, JavaScript inline nel <script>
+3. ZERO librerie esterne — solo vanilla HTML/CSS/JS
+4. NIENTE Canvas API — usa solo SVG inline o elementi DOM posizionati con CSS
+5. Interattività: massimo 2-3 slider o pulsanti, aggiornamento in tempo reale con JS
+6. Visualizzazione: SVG semplice (linee, cerchi, rettangoli) o div colorati — niente animazioni complesse
+7. Formule matematiche: testo Unicode (² ³ √ ∫ π Δ) — no LaTeX, no MathML
+8. Design pulito: sfondo bianco, colori #534AB7 (viola) e #1D9E75 (verde), font system-ui
+9. Una sola funzione JS principale che aggiorna tutto al cambio degli slider
+10. Concludi SEMPRE con </script></body></html> — il file deve essere sintatticamente completo`
 
-      const simUserPrompt = `Crea una simulazione interattiva HTML completa per:
+      const simUserPrompt = `Crea una simulazione interattiva HTML COMPATTA (max 300 righe) per:
 
 MATERIA: ${subject}
 CLASSE: ${classYear}ª — ${schoolType}
 ARGOMENTO: ${lessonTitle}
-DESCRIZIONE SIMULAZIONE: ${simulationDescription || 'Simulazione interattiva sull\'argomento indicato'}
+COSA MOSTRARE: ${simulationDescription || 'Simulazione interattiva sull\'argomento indicato'}
 
-La simulazione deve:
-- Essere visivamente accattivante e moderna
-- Avere controlli interattivi (slider, pulsanti, input) per esplorare il concetto
-- Mostrare feedback visivo immediato alle interazioni
-- Includere etichette e spiegazioni direttamente nella visualizzazione
-- Avere un titolo chiaro e una breve descrizione dell'obiettivo didattico
-- Funzionare perfettamente su desktop e tablet
+La simulazione deve avere:
+- Titolo e breve descrizione didattica (2 righe)
+- 1-3 slider per modificare i parametri principali
+- Visualizzazione SVG semplice che si aggiorna in tempo reale
+- Valori numerici che cambiano sotto la visualizzazione
+- Nessuna animazione automatica — solo risposta agli input utente
 
 ${additionalInstructions ? `ISTRUZIONI AGGIUNTIVE: ${additionalInstructions}` : ''}
 
-Genera il codice HTML completo e autonomo. Rispondi SOLO con il codice HTML, nient'altro.`
+IMPORTANTE: mantieni il codice conciso. Rispondi SOLO con il codice HTML completo, nient'altro.`
 
       const simStream = await anthropic.messages.stream({
         model: 'claude-sonnet-4-6',
