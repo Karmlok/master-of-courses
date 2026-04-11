@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 import { DeleteLessonButton } from '@/components/lessons/DeleteLessonButton'
 import { LessonActivitiesSection } from '@/components/lessons/LessonActivitiesSection'
+import { PublishToggle } from '@/components/lessons/PublishToggle'
 
 const METHODOLOGY_INFO: Record<string, { label: string; color: string }> = {
   FIVE_E: { label: 'Modello 5E', color: '#534AB7' },
@@ -91,7 +92,8 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <PublishToggle lessonId={id} isPublic={lesson.isPublic} />
           <Link
             href={`/lessons/${id}/edit`}
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
