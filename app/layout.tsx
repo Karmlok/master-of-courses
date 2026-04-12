@@ -26,11 +26,13 @@ export const metadata: Metadata = {
     siteName: 'Master of Courses',
     title: "Master of Courses — Crea lezioni con l'IA per docenti",
     description: 'La piattaforma AI per docenti delle scuole superiori italiane. Genera lezioni, verifiche, esercizi e simulazioni interattive in pochi secondi con Claude AI.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Master of Courses' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: "Master of Courses — Crea lezioni con l'IA per docenti",
     description: 'La piattaforma AI per docenti delle scuole superiori italiane. Genera lezioni, verifiche, esercizi e simulazioni interattive in pochi secondi con Claude AI.',
+    images: ['/og-image.png'],
   },
   robots: { index: true, follow: true },
 }
