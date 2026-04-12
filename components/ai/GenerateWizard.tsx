@@ -11,6 +11,7 @@ import {
   Loader2,
   Check,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ContentViewer } from './ContentViewer'
 
@@ -177,7 +178,9 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
         setGenerationResults((prev) => [...prev, { type: selectedTypes[i], content: typeContent }])
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Si è verificato un errore')
+      const msg = err instanceof Error ? err.message : 'Si è verificato un errore'
+      setError(msg)
+      toast.error('Generazione fallita: ' + msg)
     } finally {
       setIsGenerating(false)
       setCurrentIndex(-1)
@@ -209,8 +212,15 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
       }
       setIsSaved(true)
       onSaved()
+      toast.success(
+        generationResults.length === 1
+          ? 'Attività salvata con successo!'
+          : `${generationResults.length} attività salvate con successo!`
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore nel salvataggio')
+      const msg = err instanceof Error ? err.message : 'Errore nel salvataggio'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setIsSaving(false)
     }

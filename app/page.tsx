@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { MethodologyTabs } from '@/components/landing/MethodologyTabs'
+import { CookieBanner } from '@/components/landing/CookieBanner'
 
 // ─── Hero mockup ──────────────────────────────────────────────────────────────
 
@@ -223,10 +224,14 @@ export default function LandingPage() {
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <Link href="/login" className="hover:text-white transition-colors">Accedi</Link>
             <Link href="/register" className="hover:text-white transition-colors">Registrati</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Termini</Link>
           </div>
-          <p className="text-sm">Fatto con ♥ per i docenti italiani</p>
+          <p className="text-sm">© 2026 Master of Courses — Tutti i diritti riservati</p>
         </div>
       </footer>
+
+      <CookieBanner />
 
     </div>
   )

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { BookMarked, Search, Download, Loader2, BookOpen, Users } from 'lucide-react'
+import { toast } from 'sonner'
 
 const METHODOLOGY_LABELS: Record<string, string> = {
   FIVE_E: '5E', LAB: 'Lab', STANDARD: 'Standard', FLIPPED: 'Flipped',
@@ -75,7 +76,10 @@ export default function LibraryPage() {
       const res = await fetch(`/api/library/${lesson.id}/import`, { method: 'POST' })
       const json = await res.json()
       if (json.success) {
+        toast.success('Lezione importata! Ora puoi modificarla liberamente.')
         router.push(`/lessons/${json.data.id}`)
+      } else {
+        toast.error(json.message ?? 'Errore durante l\'importazione')
       }
     } finally {
       setImportingId(null)

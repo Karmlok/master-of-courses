@@ -34,8 +34,11 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/register')
 
   const isRootPage = request.nextUrl.pathname === '/'
+  const isPublicPage =
+    request.nextUrl.pathname === '/privacy' ||
+    request.nextUrl.pathname === '/terms'
 
-  if (!user && !isAuthPage && !isRootPage) {
+  if (!user && !isAuthPage && !isRootPage && !isPublicPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

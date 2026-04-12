@@ -114,6 +114,17 @@ export function Sidebar({ role, name, avatarUrl }: SidebarProps) {
           <LogOut size={18} />
           Esci
         </button>
+
+        {/* Link legali */}
+        <div className="flex items-center gap-3 px-3 pt-1">
+          <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            Privacy
+          </Link>
+          <span className="text-gray-300 text-xs">·</span>
+          <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            Termini
+          </Link>
+        </div>
       </div>
     </aside>
   )
