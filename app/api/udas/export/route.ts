@@ -153,7 +153,15 @@ export async function POST(request: Request) {
   const uda = await prisma.uDA.findFirst({
     where: { id: udaId, userId: user.id },
     include: {
-      phases: { orderBy: { position: 'asc' } },
+      phases: {
+        orderBy: { position: 'asc' },
+        include: {
+          lessons: {
+            orderBy: { position: 'asc' },
+            select: { id: true, title: true, lesson: { select: { id: true, title: true } } },
+          },
+        },
+      },
       user: { select: { name: true } },
     },
   })
@@ -336,6 +344,41 @@ export async function POST(request: Request) {
     )
   } else {
     children.push(bodyPara('Nessuna fase definita.', { italic: true }))
+  }
+
+  // Sezione 2b — Materiali collegati (solo se almeno una fase ha lezioni)
+  const phasesWithLessons = uda.phases.filter((p) => p.lessons && p.lessons.length > 0)
+  if (phasesWithLessons.length > 0) {
+    children.push(
+      new Paragraph({ spacing: { before: 240 } }),
+      new Paragraph({
+        children: [new TextRun({ text: 'Materiali collegati alle fasi', bold: true, size: 24, font: 'Arial', color: PURPLE })],
+        spacing: { before: 0, after: 120 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'E5E7EB', space: 1 } },
+      }),
+    )
+    for (const phase of phasesWithLessons) {
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: phase.title, bold: true, size: 22, font: 'Arial' })],
+          spacing: { before: 120, after: 40 },
+        }),
+      )
+      for (const pl of phase.lessons) {
+        const lessonTitle = pl.lesson?.title ?? pl.title
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: '· ', size: 20, font: 'Arial', color: '1D9E75', bold: true }),
+              new TextRun({ text: lessonTitle, size: 20, font: 'Arial' }),
+              ...(!pl.lesson ? [new TextRun({ text: ' (riferimento)', size: 18, font: 'Arial', color: '999999', italics: true })] : []),
+            ],
+            spacing: { before: 30, after: 30 },
+            indent: { left: 360 },
+          }),
+        )
+      }
+    }
   }
 
   // Sezione 3 — Valutazione (solo criteri, NON rubrica)
