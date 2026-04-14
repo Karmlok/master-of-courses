@@ -131,14 +131,14 @@ export function LessonActivitiesSection({
                 return (
                   <div
                     key={type.key}
-                    className="w-full flex items-center justify-between px-4 py-2.5 border-r-2 border-transparent opacity-50 cursor-not-allowed"
+                    className="w-full flex items-center justify-between px-4 py-2.5 border-r-2 border-transparent bg-amber-50 cursor-not-allowed"
                     title="Funzione in arrivo"
                   >
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-400">
+                    <span className="flex items-center gap-2 text-sm font-medium text-gray-500">
                       <span className="text-base leading-none grayscale">{type.emoji}</span>
                       {type.label}
                     </span>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-500 leading-none whitespace-nowrap">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-white leading-none whitespace-nowrap">
                       In arrivo
                     </span>
                   </div>

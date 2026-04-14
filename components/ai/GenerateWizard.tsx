@@ -327,12 +327,12 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
                     return (
                       <div
                         key={type.key}
-                        className="relative flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed select-none"
+                        className="relative flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 border-amber-300 bg-amber-50 cursor-not-allowed select-none"
                         title="Funzione in arrivo"
                       >
                         <span className="text-lg leading-none grayscale">{type.emoji}</span>
-                        <span className="text-sm font-medium text-gray-400">{type.label}</span>
-                        <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 leading-none">
+                        <span className="text-sm font-medium text-gray-500">{type.label}</span>
+                        <span className="absolute top-1.5 right-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-white leading-none">
                           In arrivo
                         </span>
                       </div>
