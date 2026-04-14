@@ -17,7 +17,7 @@ const ALL_ACTIVITY_TYPES = [
   { key: 'SCHEDA', label: 'Scheda studente', emoji: '📄' },
   { key: 'DIAPOSITIVE', label: 'Scaletta slide', emoji: '🖥️' },
   { key: 'COMPITO', label: 'Compito per casa', emoji: '🏠' },
-  { key: 'SIMULATION', label: 'Simulazione', emoji: '▶️' },
+  { key: 'SIMULATION', label: 'Simulazione', emoji: '▶️', comingSoon: true },
 ]
 
 // ─── Tipi ─────────────────────────────────────────────────────────────────────
@@ -126,6 +126,25 @@ export function LessonActivitiesSection({
             {ALL_ACTIVITY_TYPES.map((type) => {
               const hasContent = !!activitiesByType[type.key]
               const isActive = selectedType === type.key
+
+              if (type.comingSoon) {
+                return (
+                  <div
+                    key={type.key}
+                    className="w-full flex items-center justify-between px-4 py-2.5 border-r-2 border-transparent opacity-50 cursor-not-allowed"
+                    title="Funzione in arrivo"
+                  >
+                    <span className="flex items-center gap-2 text-sm font-medium text-gray-400">
+                      <span className="text-base leading-none grayscale">{type.emoji}</span>
+                      {type.label}
+                    </span>
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-500 leading-none whitespace-nowrap">
+                      In arrivo
+                    </span>
+                  </div>
+                )
+              }
+
               return (
                 <button
                   key={type.key}

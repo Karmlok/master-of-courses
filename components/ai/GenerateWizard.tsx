@@ -32,7 +32,7 @@ const ACTIVITY_TYPES = [
   { key: 'SCHEDA', label: 'Scheda studente', emoji: '📄' },
   { key: 'DIAPOSITIVE', label: 'Scaletta diapositive', emoji: '🖥️' },
   { key: 'COMPITO', label: 'Compito per casa', emoji: '🏠' },
-  { key: 'SIMULATION', label: 'Simulazione interattiva', emoji: '▶️' },
+  { key: 'SIMULATION', label: 'Simulazione interattiva', emoji: '▶️', comingSoon: true },
 ]
 
 const TONES = [
@@ -323,6 +323,21 @@ export function GenerateWizard({ lesson, course, defaultTypes, onClose, onSaved 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {ACTIVITY_TYPES.map((type) => {
                   const isSelected = selectedTypes.includes(type.key)
+                  if (type.comingSoon) {
+                    return (
+                      <div
+                        key={type.key}
+                        className="relative flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed select-none"
+                        title="Funzione in arrivo"
+                      >
+                        <span className="text-lg leading-none grayscale">{type.emoji}</span>
+                        <span className="text-sm font-medium text-gray-400">{type.label}</span>
+                        <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 leading-none">
+                          In arrivo
+                        </span>
+                      </div>
+                    )
+                  }
                   return (
                     <button
                       key={type.key}
