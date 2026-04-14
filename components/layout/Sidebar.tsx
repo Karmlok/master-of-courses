@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { BookOpen, BookMarked, LayoutDashboard, LogOut, Settings, ShieldCheck } from 'lucide-react'
+import { BookOpen, BookMarked, FolderOpen, LayoutDashboard, LogOut, Settings, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Avatar } from '@/components/ui/Avatar'
@@ -11,6 +11,7 @@ import { Avatar } from '@/components/ui/Avatar'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/courses', label: 'I miei corsi', icon: BookOpen },
+  { href: '/udas', label: 'UDA', icon: FolderOpen },
   { href: '/library', label: 'Libreria', icon: BookMarked },
 ]
 

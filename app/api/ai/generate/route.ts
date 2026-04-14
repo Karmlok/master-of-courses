@@ -40,6 +40,139 @@ export async function POST(request: NextRequest) {
       schoolType,
     } = body
 
+    // ── UDA: curricolo ───────────────────────────────────────────────────────
+    if (activityTypes[0] === 'UDA_CURRICULAR') {
+      const { udaTitle, udaSection, subjects: udaSubjects, schoolType: udaSchoolType } = body
+      const sectionMap: Record<string, string> = {
+        competences: 'Competenze chiave europee coinvolte (lista puntata, massimo 5)',
+        goals: 'Traguardi di competenza disciplinari (lista puntata, riferiti alle Indicazioni Nazionali)',
+        knowledge: 'Obiettivi di apprendimento: Conoscenze (lista) e Abilità (lista separata)',
+      }
+      const curricularPrompt = `Sei un esperto di didattica per le scuole superiori italiane.
+
+Genera i seguenti riferimenti curricolari per questa UDA:
+
+TITOLO UDA: ${udaTitle}
+DISCIPLINE: ${(udaSubjects as string[]).join(', ')}
+CLASSE: ${classYear}ª — ${udaSchoolType}
+
+SEZIONE DA GENERARE: ${sectionMap[udaSection] ?? udaSection}
+
+Rispondi SOLO con il contenuto richiesto, in italiano, formattato in HTML semplice con <ul> e <li>.
+Sii preciso e coerente con le Indicazioni Nazionali italiane.`
+
+      const currStream = await anthropic.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: curricularPrompt }],
+      })
+      const currReadable = new ReadableStream({
+        async start(controller) {
+          for await (const chunk of currStream) {
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text))
+            }
+          }
+          controller.close()
+        },
+      })
+      return new Response(currReadable, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Transfer-Encoding': 'chunked' },
+      })
+    }
+
+    // ── UDA: fasi ────────────────────────────────────────────────────────────
+    if (activityTypes[0] === 'UDA_PHASES') {
+      const { udaTitle, subjects: udaSubjects, totalHours, finalProduct } = body
+      const phasesPrompt = `Sei un esperto di progettazione didattica per le scuole superiori italiane.
+
+Progetta le fasi di lavoro per questa UDA:
+
+TITOLO: ${udaTitle}
+DISCIPLINE: ${(udaSubjects as string[]).join(', ')}
+CLASSE: ${classYear}ª
+ORE TOTALI: ${totalHours}
+PRODOTTO FINALE: ${finalProduct}
+
+Genera una sequenza di 4-6 fasi didattiche che sommino esattamente ${totalHours} ore.
+
+Formato risposta JSON array (SOLO JSON, nessun testo aggiuntivo):
+[
+  {
+    "title": "Fase 1 — Titolo",
+    "hours": 2,
+    "methodology": "Frontale",
+    "description": "Descrizione attività..."
+  }
+]`
+
+      const phasesStream = await anthropic.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: phasesPrompt }],
+      })
+      const phasesReadable = new ReadableStream({
+        async start(controller) {
+          for await (const chunk of phasesStream) {
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text))
+            }
+          }
+          controller.close()
+        },
+      })
+      return new Response(phasesReadable, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Transfer-Encoding': 'chunked' },
+      })
+    }
+
+    // ── UDA: rubrica ─────────────────────────────────────────────────────────
+    if (activityTypes[0] === 'UDA_RUBRIC') {
+      const { udaTitle, subjects: udaSubjects, finalProduct } = body
+      const rubricPrompt = `Sei un esperto di valutazione didattica per le scuole superiori italiane.
+
+Crea una rubrica valutativa completa per questa UDA:
+
+TITOLO: ${udaTitle}
+DISCIPLINE: ${(udaSubjects as string[]).join(', ')}
+CLASSE: ${classYear}ª
+PRODOTTO FINALE: ${finalProduct}
+
+La rubrica deve avere:
+- 4-5 criteri di valutazione pertinenti
+- 4 livelli per ogni criterio: Avanzato (9-10) / Intermedio (7-8) / Base (6) / In via di acquisizione (4-5)
+- Descrittori chiari e osservabili per ogni livello
+
+Formatta la risposta come tabella HTML con:
+- Prima colonna: criterio (sfondo #F8F7FF)
+- Colonne 2-5: livelli (Avanzato, Intermedio, Base, In via di acquisizione)
+- Header con sfondo #534AB7 e testo bianco
+- Righe alternate bianco e #F8F7FF
+- Bordi: border: 1px solid #e5e7eb
+- Padding celle: padding: 8px 12px
+- Font-size: 13px
+Rispondi SOLO con la tabella HTML, senza tag html/head/body.`
+
+      const rubricStream = await anthropic.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: rubricPrompt }],
+      })
+      const rubricReadable = new ReadableStream({
+        async start(controller) {
+          for await (const chunk of rubricStream) {
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text))
+            }
+          }
+          controller.close()
+        },
+      })
+      return new Response(rubricReadable, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Transfer-Encoding': 'chunked' },
+      })
+    }
+
     // ── Simulazione: percorso separato ───────────────────────────────────────
     if (activityTypes[0] === 'SIMULATION') {
       const simSystemPrompt = `Sei un esperto di didattica e sviluppo web. Crei simulazioni interattive HTML/CSS/JavaScript compatte e autonome per le scuole superiori italiane.

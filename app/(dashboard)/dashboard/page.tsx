@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CourseCard } from '@/components/courses/CourseCard'
-import { Plus, BookOpen } from 'lucide-react'
+import { Plus, BookOpen, FolderOpen } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,15 +15,18 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const courses = await prisma.course.findMany({
-    where: { userId: user.id },
-    include: {
-      modules: {
-        include: { _count: { select: { lessons: true } } },
+  const [courses, udaCount] = await Promise.all([
+    prisma.course.findMany({
+      where: { userId: user.id },
+      include: {
+        modules: {
+          include: { _count: { select: { lessons: true } } },
+        },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.uDA.count({ where: { userId: user.id } }),
+  ])
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
@@ -32,6 +35,25 @@ export default async function DashboardPage() {
 
   return (
     <div>
+      {/* Metriche rapide */}
+      {(courses.length > 0 || udaCount > 0) && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+            <p className="text-xs text-gray-500 mb-1">Corsi attivi</p>
+            <p className="text-2xl font-bold text-[#534AB7]">{courses.length}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+            <p className="text-xs text-gray-500 mb-1">UDA create</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-[#534AB7]">{udaCount}</p>
+              <Link href="/udas" className="text-xs text-[#534AB7] hover:underline flex items-center gap-1">
+                <FolderOpen size={12} /> Vedi
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

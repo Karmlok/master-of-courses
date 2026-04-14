@@ -18,6 +18,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   courses Course[]
+  udas    UDA[]
 }
 
 enum Role {
@@ -71,8 +72,9 @@ model Lesson {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  module     Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  activities Activity[]
+  module        Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  activities    Activity[]
+  udaPhaseLinks UDAPhaseLesson[]
 }
 
 enum Methodology {
@@ -111,4 +113,70 @@ enum ActivityType {
   DIAPOSITIVE
   COMPITO
   SIMULATION
+}
+
+// ─── UDA ──────────────────────────────────────────────────────────────────────
+
+model UDA {
+  id              String    @id @default(uuid())
+  userId          String
+  title           String
+  subjects        String[]
+  classYear       Int
+  classSection    String
+  schoolType      String
+  period          String?
+  totalHours      Int       @default(10)
+  finalProduct    String?
+
+  europeanCompetences  String?  @db.Text
+  learningGoals        String?  @db.Text
+  knowledgeSkills      String?  @db.Text
+
+  evaluationCriteria   String?  @db.Text
+  evaluationRubric     String?  @db.Text
+
+  status          UDAStatus @default(DRAFT)
+  isPublic        Boolean   @default(false)
+  publishedAt     DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phases          UDAPhase[]
+}
+
+enum UDAStatus {
+  DRAFT
+  READY
+  PUBLISHED
+}
+
+model UDAPhase {
+  id            String   @id @default(uuid())
+  udaId         String
+  title         String
+  description   String?  @db.Text
+  hours         Int      @default(2)
+  methodology   String?
+  tools         String?
+  position      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  uda           UDA      @relation(fields: [udaId], references: [id], onDelete: Cascade)
+  lessons       UDAPhaseLesson[]
+}
+
+model UDAPhaseLesson {
+  id        String   @id @default(uuid())
+  phaseId   String
+  lessonId  String?
+  title     String
+  notes     String?
+  position  Int      @default(0)
+
+  phase     UDAPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id])
 }
