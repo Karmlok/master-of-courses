@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { redirect } from 'next/navigation'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 export default async function DashboardLayout({
   children,
@@ -18,15 +18,12 @@ export default async function DashboardLayout({
   })
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <Sidebar
-        role={dbUser?.role ?? 'TEACHER'}
-        name={dbUser?.name ?? ''}
-        avatarUrl={dbUser?.avatarUrl ?? null}
-      />
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-8 py-8">{children}</div>
-      </main>
-    </div>
+    <DashboardShell
+      role={dbUser?.role ?? 'TEACHER'}
+      name={dbUser?.name ?? ''}
+      avatarUrl={dbUser?.avatarUrl ?? null}
+    >
+      {children}
+    </DashboardShell>
   )
 }

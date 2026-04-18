@@ -19,7 +19,7 @@ export default async function UDAsPage() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
